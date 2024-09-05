@@ -11,6 +11,7 @@ func main() {
 	app.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "seonator online")
 	})
-	app.GET("/*", Methods.GetSite)
+	app.GET("/rod", Methods.GetSite)
+	app.GET("/pw" , Methods.PlaywrightScrape)
 	app.Start(":4000")
 }
