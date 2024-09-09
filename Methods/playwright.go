@@ -2,19 +2,20 @@ package Methods
 
 import (
 	"fmt"
+	"github.com/PuerkitoBio/goquery"
+	"github.com/labstack/echo/v4"
+	"github.com/playwright-community/playwright-go"
 	"io"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
-	"github.com/PuerkitoBio/goquery"
-	"github.com/labstack/echo/v4"
-	"github.com/playwright-community/playwright-go"
 )
 
 type metaType struct {
 	Meta map[string]string `json:"meta"`
 }
+
 func PlaywrightScrape(c echo.Context) error {
 
 	type hrefType struct {
@@ -26,16 +27,21 @@ func PlaywrightScrape(c echo.Context) error {
 	}
 
 	type Htags struct {
-		TagName string `json:"tagName"`
-		IsPresent bool `json:"isPresent"`
+		TagName   string `json:"tagName"`
+		IsPresent bool   `json:"isPresent"`
+	}
+
+	type imgAltType struct {
+		MissingALt string `json:"alt"`
 	}
 
 	type apiResult struct {
-		Meta  []metaType        `json:"metas"`
-		Link  []headLinkType    `json:"links"`
-		Href  []hrefType        `json:"hrefs"`
-		HTags []Htags `json:"htags"`
-		ScreenshotByte []byte `json:"ss"`
+		Meta           []metaType     `json:"metas"`
+		Link           []headLinkType `json:"links"`
+		Href           []hrefType     `json:"hrefs"`
+		HTags          []Htags        `json:"htags"`
+		Imgs           []imgAltType   `json:"imgs"`
+		ScreenshotByte []byte         `json:"ss"`
 	}
 
 	url := c.QueryParam("url")
@@ -63,7 +69,7 @@ func PlaywrightScrape(c echo.Context) error {
 	}
 
 	page.WaitForLoadState(playwright.PageWaitForLoadStateOptions{
-		State:   playwright.LoadStateNetworkidle,
+		State: playwright.LoadStateNetworkidle,
 		//Timeout: playwright.Float(300),
 	})
 
@@ -90,7 +96,6 @@ func PlaywrightScrape(c echo.Context) error {
 		exportMeta = append(exportMeta, metaType{attributes})
 	})
 
-
 	//find all links in head
 	fmt.Println("getting link tags...")
 	exportLink := []headLinkType{}
@@ -116,7 +121,7 @@ func PlaywrightScrape(c echo.Context) error {
 
 	//find h* tags and return bool
 	fmt.Println("getting h tags...")
-	exportHTags := []Htags{} 
+	exportHTags := []Htags{}
 	for i := 1; i < 7; i++ {
 		conCat := "h" + strconv.Itoa(i)
 		checkTag := doc.Find(conCat).Is(conCat)
@@ -124,14 +129,23 @@ func PlaywrightScrape(c echo.Context) error {
 	}
 	//fmt.Printf("htags: %v", exportHTags)
 
+	fmt.Println("getting imgs...")
+	exportImgAlts := []imgAltType{}
+	doc.Find("img").Each(func(i int, img *goquery.Selection) {
+		alt, _ := img.Attr("alt")
+		if len(alt) < 1 {
+			html, _ := goquery.OuterHtml(img)
+			exportImgAlts = append(exportImgAlts, imgAltType{html})
+		}
+	})
 
-	screenshotByteArr,err := page.Screenshot(playwright.PageScreenshotOptions{
-		Path: playwright.String("./temp.jpeg"),
+	screenshotByteArr, err := page.Screenshot(playwright.PageScreenshotOptions{
+		Path:    playwright.String("./temp.jpeg"),
 		Quality: playwright.Int(50),
-		Type: playwright.ScreenshotTypeJpeg,
+		Type:    playwright.ScreenshotTypeJpeg,
 		//Timeout: playwright.Float(4000),
 	})
-	if err != nil{
+	if err != nil {
 		fmt.Println(err)
 	}
 
@@ -140,11 +154,9 @@ func PlaywrightScrape(c echo.Context) error {
 		exportLink,
 		exportHref,
 		exportHTags,
+		exportImgAlts,
 		screenshotByteArr,
 	}
-
-
-
 
 	return c.JSON(http.StatusOK, result)
 }
