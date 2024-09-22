@@ -28,7 +28,8 @@ func PlaywrightScrape(c echo.Context) error {
 
 	type Htags struct {
 		TagName   string `json:"tagName"`
-		IsPresent bool   `json:"isPresent"`
+		TagPresent bool   `json:"tagPresent"`
+		TagValue int `json:"tagValue"`
 	}
 
 	type imgAltType struct {
@@ -36,6 +37,7 @@ func PlaywrightScrape(c echo.Context) error {
 	}
 
 	type apiResult struct {
+		Title string 
 		Meta           []metaType     `json:"metas"`
 		Link           []headLinkType `json:"links"`
 		Href           []hrefType     `json:"hrefs"`
@@ -65,7 +67,7 @@ func PlaywrightScrape(c echo.Context) error {
 		log.Fatalf("could not create page: %v", err)
 	}
 	if _, err = page.Goto(url); err != nil {
-		log.Fatalf("could not goto: %v", err)
+		return c.JSON(http.StatusRequestTimeout, "request timed out" )
 	}
 
 	page.WaitForLoadState(playwright.PageWaitForLoadStateOptions{
@@ -83,6 +85,10 @@ func PlaywrightScrape(c echo.Context) error {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+
+	//title tag
+	exportTitle := doc.Find("title").Text()
 
 	//find all meta tags
 	fmt.Println("getting meta data...")
@@ -124,8 +130,10 @@ func PlaywrightScrape(c echo.Context) error {
 	exportHTags := []Htags{}
 	for i := 1; i < 7; i++ {
 		conCat := "h" + strconv.Itoa(i)
-		checkTag := doc.Find(conCat).Is(conCat)
-		exportHTags = append(exportHTags, Htags{conCat, checkTag})
+		findTag := doc.Find(conCat)
+		checkTag := findTag.Is(conCat)
+		checkCount := findTag.Length()
+		exportHTags = append(exportHTags, Htags{conCat, checkTag, checkCount})
 	}
 	//fmt.Printf("htags: %v", exportHTags)
 
@@ -150,6 +158,7 @@ func PlaywrightScrape(c echo.Context) error {
 	}
 
 	result := apiResult{
+		exportTitle,
 		exportMeta,
 		exportLink,
 		exportHref,
