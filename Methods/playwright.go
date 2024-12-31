@@ -27,9 +27,9 @@ func PlaywrightScrape(c echo.Context) error {
 	}
 
 	type Htags struct {
-		TagName   string `json:"tagName"`
+		TagName    string `json:"tagName"`
 		TagPresent bool   `json:"tagPresent"`
-		TagValue int `json:"tagValue"`
+		TagValue   int    `json:"tagValue"`
 	}
 
 	type imgAltType struct {
@@ -37,7 +37,7 @@ func PlaywrightScrape(c echo.Context) error {
 	}
 
 	type apiResult struct {
-		Title string 
+		Title          string
 		Meta           []metaType     `json:"metas"`
 		Link           []headLinkType `json:"links"`
 		Href           []hrefType     `json:"hrefs"`
@@ -49,9 +49,9 @@ func PlaywrightScrape(c echo.Context) error {
 	url := c.QueryParam("url")
 	fmt.Println(url)
 
-	if err := playwright.Install(); err != nil {
-		log.Panic(err)
-	}
+	//if err := playwright.Install(); err != nil {
+	//	log.Panic(err)
+	//}
 
 	pw, err := playwright.Run()
 	if err != nil {
@@ -67,7 +67,7 @@ func PlaywrightScrape(c echo.Context) error {
 		log.Fatalf("could not create page: %v", err)
 	}
 	if _, err = page.Goto(url); err != nil {
-		return c.JSON(http.StatusRequestTimeout, "request timed out" )
+		return c.JSON(http.StatusRequestTimeout, "request timed out")
 	}
 
 	page.WaitForLoadState(playwright.PageWaitForLoadStateOptions{
@@ -85,7 +85,6 @@ func PlaywrightScrape(c echo.Context) error {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 
 	//title tag
 	exportTitle := doc.Find("title").Text()
@@ -167,5 +166,8 @@ func PlaywrightScrape(c echo.Context) error {
 		screenshotByteArr,
 	}
 
+  if err = browser.Close(); err != nil {
+		log.Fatalf("could not close browser: %v", err)
+	}
 	return c.JSON(http.StatusOK, result)
 }

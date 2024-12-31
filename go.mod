@@ -6,6 +6,7 @@ require (
 	github.com/PuerkitoBio/goquery v1.9.2
 	github.com/go-rod/rod v0.116.2
 	github.com/labstack/echo/v4 v4.12.0
+	github.com/playwright-community/playwright-go v0.4501.1
 )
 
 require (
@@ -16,7 +17,6 @@ require (
 	github.com/labstack/gommon v0.4.2 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/playwright-community/playwright-go v0.4501.1 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/ysmood/fetchup v0.2.3 // indirect
